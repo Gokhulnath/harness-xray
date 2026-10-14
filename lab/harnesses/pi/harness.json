@@ -1,0 +1,83 @@
+{
+  "name": "pi",
+  "display": "pi coding agent (@earendil-works/pi-coding-agent 0.87.1)",
+  "runtime": "node",
+  "probe": "node",
+  "protocol": "openai-chat",
+  "agent_match": "(^|/)(pi|pi-rpc)( |$)|pi-coding-agent",
+  "version_cmd": [
+    "pi",
+    "--version"
+  ],
+  "env": {
+    "PI_CODING_AGENT_DIR": "/home/agent/.pi/agent"
+  },
+  "offline_env": {
+    "PI_OFFLINE": "1"
+  },
+  "modes": {
+    "json": [
+      "pi",
+      "--mode",
+      "json",
+      "{flags}",
+      "{prompt}"
+    ],
+    "print": [
+      "pi",
+      "-p",
+      "{flags}",
+      "{prompt}"
+    ],
+    "tui": [
+      "pi",
+      "{flags}",
+      "{prompt}"
+    ],
+    "tui_idle": [
+      "pi",
+      "{flags}"
+    ],
+    "rpc": [
+      "pi",
+      "--mode",
+      "rpc",
+      "{flags}"
+    ]
+  },
+  "flags": {
+    "all_tools": [
+      "--tools",
+      "read,bash,edit,write,grep,find,ls"
+    ],
+    "small_context": [
+      "--model",
+      "mock-small"
+    ],
+    "real": [
+      "--provider",
+      "openrouter",
+      "--model",
+      "{OR_MODEL}"
+    ]
+  },
+  "real_env": {
+    "OPENROUTER_API_KEY": null
+  },
+  "rpc_prompt": {
+    "type": "prompt",
+    "message": "{prompt}"
+  },
+  "rpc_done": "\"type\":\"agent_settled\"",
+  "events": "pi-json",
+  "features": [
+    "cache-warmer",
+    "config-dir",
+    "fd-download",
+    "rpc",
+    "small-context",
+    "subagent-ext",
+    "timing-env"
+  ],
+  "notes": "Provider 'mock' in ~/.pi/agent/models.json points at http://mockllm:8080/v1 with sendSessionAffinityHeaders."
+}

@@ -1,0 +1,48 @@
+# Agent lab: one harness container + mock LLM + privileged monitor (eBPF, /proc, cgroups).
+# Pick the harness with HARNESS=<name> (a folder under harnesses/). Build the base first:
+#   docker build -t lab-agent-base base/      (lab.sh does this)
+name: lab
+services:
+  agent:
+    build: ./harnesses/${HARNESS:-pi}
+    image: lab-agent-${HARNESS:-pi}
+    container_name: lab-agent
+    init: true                      # tini as PID 1 reaps orphaned tool processes
+    cap_add: [SYS_PTRACE]           # strace runs
+    security_opt: ["seccomp=unconfined"]
+    environment:
+      TERM: xterm-256color
+    volumes:
+      - ./out:/lab/out
+      - ./probe:/lab/probe:ro
+    mem_limit: 8g
+    depends_on: [mockllm]
+    labels: { lab.harness: "${HARNESS:-pi}" }
+
+  mockllm:
+    build: ./mockllm
+    container_name: lab-mockllm
+    volumes:
+      - ./out:/lab/out
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  monitor:
+    build: ./monitor
+    container_name: lab-monitor
+    pid: host                       # VM-wide /proc; sampler filters to lab cgroups, maps NSpid
+    cgroup: host                    # read sibling container cgroups (cpu/mem/io/psi)
+    privileged: true                # eBPF (bpftrace) + /proc/<pid>/io of other users
+    environment:
+      SAMPLE_MS: "100"
+      AGENT_CONTAINER: lab-agent
+      HARNESS: "${HARNESS:-pi}"
+    volumes:
+      - ./out:/lab/out
+      - ./explorer:/lab/explorer:ro
+      - ./monitor:/lab/monitor:ro          # live-editable code + dashboard (restart to reload sampler)
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "127.0.0.1:8765:8765"
+    depends_on: [agent, mockllm]

@@ -1,0 +1,20 @@
+{
+  "hasCompletedOnboarding": true,
+  "lastOnboardingVersion": "2.1.299",
+  "theme": "dark",
+  "autoUpdates": false,
+  "bypassPermissionsModeAccepted": true,
+  "customApiKeyResponses": {
+    "approved": [
+      "ock-key-000000000000"
+    ],
+    "rejected": []
+  },
+  "projects": {
+    "/workspace": {
+      "hasTrustDialogAccepted": true,
+      "hasCompletedProjectOnboarding": true,
+      "allowedTools": []
+    }
+  }
+}

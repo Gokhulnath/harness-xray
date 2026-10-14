@@ -1,0 +1,67 @@
+{
+  "name": "claude-code",
+  "display": "Claude Code (@anthropic-ai/claude-code 2.1.299)",
+  "runtime": "node",
+  "probe": "node",
+  "protocol": "anthropic",
+  "agent_match": "(^|/)claude( |$)|claude-code/cli",
+  "version_cmd": [
+    "claude",
+    "--version"
+  ],
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://mockllm:8080",
+    "ANTHROPIC_API_KEY": "sk-ant-lab-mock-key-000000000000",
+    "ANTHROPIC_MODEL": "mock-1",
+    "ANTHROPIC_SMALL_FAST_MODEL": "mock-1",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "mock-1",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "mock-1",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "mock-1",
+    "DISABLE_AUTOUPDATER": "1",
+    "IS_SANDBOX": "1"
+  },
+  "offline_env": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1"
+  },
+  "modes": {
+    "json": [
+      "claude",
+      "-p",
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--dangerously-skip-permissions",
+      "{flags}",
+      "{prompt}"
+    ],
+    "print": [
+      "claude",
+      "-p",
+      "--dangerously-skip-permissions",
+      "{flags}",
+      "{prompt}"
+    ],
+    "tui": [
+      "claude",
+      "--dangerously-skip-permissions",
+      "{flags}",
+      "{prompt}"
+    ],
+    "tui_idle": [
+      "claude",
+      "--dangerously-skip-permissions",
+      "{flags}"
+    ]
+  },
+  "flags": {
+    "all_tools": [],
+    "small_context": [],
+    "real": []
+  },
+  "events": "claude-stream-json",
+  "features": [],
+  "notes": "Speaks Anthropic Messages to the mock. Onboarding, trust dialog and API-key approval are pre-accepted in ~/.claude.json.",
+  "status": "adapter written; not yet validated against the lab (pi is the validated harness)"
+}

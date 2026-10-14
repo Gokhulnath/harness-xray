@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent lab · live</title>
+<style>
+  :root { --bg:#0b0e13; --panel:#12161d; --line:#262d39; --fg:#e6edf3; --dim:#8b96a5; --faint:#56606e; --accent:#58a6ff; --bad:#f85149; --good:#3fb950; --warn:#d29922; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:12.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  header { display:flex; gap:18px; align-items:baseline; padding:9px 14px; border-bottom:1px solid var(--line); flex-wrap:wrap; background:var(--panel); position:sticky; top:0; z-index:5; }
+  header h1 { font-size:14px; margin:0; } header a { color:var(--accent); text-decoration:none; }
+  .kpi { color:var(--dim); } .kpi b { color:var(--fg); font-size:14px; }
+  main { display:grid; grid-template-columns: repeat(12, 1fr); gap:10px; padding:10px 14px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:7px; padding:8px 10px; min-width:0; }
+  .w12{grid-column:span 12}.w8{grid-column:span 8}.w6{grid-column:span 6}.w4{grid-column:span 4}
+  @media (max-width:1200px){ .w8,.w6,.w4 { grid-column:span 12; } }
+  .panel h2 { font-size:11px; margin:0 0 6px; color:var(--dim); font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+  .panel h2 .h { text-transform:none; letter-spacing:0; font-weight:400; color:var(--faint); }
+  canvas { width:100%; height:150px; display:block; }
+  .legend { display:flex; flex-wrap:wrap; gap:3px 12px; color:var(--dim); font-size:11px; margin-top:4px; }
+  .legend i { display:inline-block; width:9px; height:9px; margin-right:4px; vertical-align:-1px; border-radius:2px; }
+  table { width:100%; border-collapse:collapse; font-size:11.5px; }
+  td, th { padding:2px 5px; text-align:right; white-space:nowrap; border-bottom:1px solid #1d232d; }
+  th { color:var(--dim); font-weight:500; position:sticky; top:0; background:var(--panel); }
+  td.l, th.l { text-align:left; } td.cmd { text-align:left; max-width:560px; overflow:hidden; text-overflow:ellipsis; }
+  .scroll { max-height:380px; overflow:auto; }
+  .bar { display:inline-block; height:8px; vertical-align:middle; border-radius:2px; }
+  #feed div { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; border-bottom:1px solid #1d232d; padding:1px 0; }
+  .root { color:var(--bad); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Agent lab · live</h1>
+  <span class="kpi">harness <b id="harness">–</b></span>
+  <span class="kpi">run <b id="run">–</b></span>
+  <span class="kpi">agent container CPU <b id="cgcpu">–</b></span>
+  <span class="kpi">mem <b id="cgmem">–</b> (peak <span id="cgpeak">–</span>)</span>
+  <span class="kpi">pids <b id="cgpids">–</b></span>
+  <span class="kpi">net rx/tx <b id="net">–</b></span>
+  <span class="kpi">mock CPU <b id="mockcpu">–</b></span>
+  <span class="kpi">agents <b id="nagent">–</b></span>
+  <span class="kpi">VM load <b id="load">–</b></span>
+  <a href="/explorer/">open the explorer →</a>
+</header>
+<main>
+  <section class="panel w8"><h2>CPU % by process role <span class="h">(100 = one core; every process has an explicit role)</span></h2><canvas id="cpu"></canvas><div class="legend" id="rolelegend"></div></section>
+  <section class="panel w4"><h2>Memory MB</h2><canvas id="mem"></canvas><div class="legend"><span><i style="background:#79c0ff"></i>container memory.current</span><span><i style="background:#58a6ff"></i>Σ agent RSS</span><span><i style="background:#d2a8ff"></i>Σ agent JS heap</span></div></section>
+  <section class="panel w4"><h2>Agent event loop <span class="h">(node probe)</span></h2><canvas id="loop"></canvas><div class="legend"><span><i style="background:#58a6ff"></i>utilization %</span><span><i style="background:#f85149"></i>p99 lag ms</span></div></section>
+  <section class="panel w4"><h2>Container network B/s</h2><canvas id="netc"></canvas><div class="legend"><span><i style="background:#3fb950"></i>agent rx</span><span><i style="background:#f0883e"></i>agent tx</span><span><i style="background:#8b949e"></i>agent loopback</span></div></section>
+  <section class="panel w4"><h2>Agent threads <span class="h">(CPU % and run-queue wait ms/s, live)</span></h2><div class="scroll" style="max-height:170px"><table id="thr"><thead><tr><th class="l">pid</th><th class="l">thread</th><th>cpu%</th><th></th><th>rq ms/s</th><th>core</th><th>st</th></tr></thead><tbody></tbody></table></div></section>
+  <section class="panel w4"><h2>Syscalls last second <span class="h">(eBPF, by thread name)</span></h2><div class="scroll" style="max-height:230px"><table id="sys"><thead><tr><th class="l">thread</th><th class="l">syscall</th><th>count</th></tr></thead><tbody></tbody></table></div></section>
+  <section class="panel w4"><h2>File I/O last second <span class="h">(eBPF vfs read/write, bytes)</span></h2><div class="scroll" style="max-height:230px"><table id="files"><thead><tr><th class="l">op</th><th class="l">process</th><th class="l">type</th><th class="l">file</th><th>bytes</th></tr></thead><tbody></tbody></table></div></section>
+  <section class="panel w4"><h2>Network last second <span class="h">(eBPF, per process)</span></h2><div class="scroll" style="max-height:230px"><table id="netp"><thead><tr><th class="l">process</th><th class="l">kind</th><th>bytes</th></tr></thead><tbody></tbody></table></div><div id="opens" style="color:var(--dim);margin-top:4px"></div></section>
+  <section class="panel w12"><h2>Process tree <span class="h">(agent container; role · cpu · rss · run-queue wait)</span></h2><div class="scroll"><table id="ptab"><thead><tr><th>pid</th><th>ns pid</th><th>ppid</th><th>uid</th><th>st</th><th>cpu%</th><th></th><th>rss MB</th><th>thr</th><th>rq ms</th><th>heap MB</th><th>ELU</th><th class="l">role</th><th class="l">command</th></tr></thead><tbody></tbody></table></div></section>
+  <section class="panel w12"><h2>Event feed <span class="h">(agent events · spawns · eBPF exec/exit · TCP · signals · http · GC · marks)</span></h2><div id="feed" class="scroll" style="max-height:260px"></div></section>
+</main>
+<script>
+const W = 240;
+const S = { t:[], roles:{}, mem:[], rss:[], heap:[], elu:[], lag:[], rx:[], tx:[], lo:[] };
+let ROLE_INFO = {};
+const ROLE_ORDER = ["agent","agent:nested","tool:shell","tool:command","tool:search","tool:sudo","tool:root","agent:helper","tui:tmux","lab:docker-exec","lab:harness","container:init"];
+const roleColor = r => (ROLE_INFO[r] && ROLE_INFO[r][1]) || '#f0f';
+const roleName = r => (ROLE_INFO[r] && ROLE_INFO[r][0]) || r;
+
+function draw(id, keys, colors, opts={}) {
+  const cv = document.getElementById(id), dpr = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  cv.width = w*dpr; cv.height = h*dpr; const g = cv.getContext('2d'); g.scale(dpr,dpr); g.clearRect(0,0,w,h);
+  const n = S.t.length; if (!n) return;
+  const get = k => opts.roles ? (S.roles[k] || []) : S[k];
+  let max = opts.max || 1;
+  if (opts.stack) { for (let i=0;i<n;i++){ let s=0; for (const k of keys) s += get(k)[i]||0; max = Math.max(max,s);} }
+  else for (const k of keys) for (const v of get(k)) max = Math.max(max, v||0);
+  max *= 1.1;
+  g.strokeStyle='#1d232d'; g.fillStyle='#8b96a5'; g.font='10px ui-monospace';
+  const fmt = v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'k' : v.toFixed(v<10?1:0);
+  for (let i=0;i<=4;i++){ const y = h-(h-12)*i/4-1; g.beginPath(); g.moveTo(34,y); g.lineTo(w,y); g.stroke(); g.fillText(fmt(max*i/4),0,y+3); }
+  const X = i => 34 + (w-36)*(i + W - n)/(W-1), Y = v => h-1-(h-12)*v/max;
+  if (opts.stack) {
+    const base = new Array(n).fill(0);
+    keys.forEach((k,ki) => { const d = get(k); g.beginPath(); g.moveTo(X(0),Y(base[0]));
+      for (let i=0;i<n;i++) g.lineTo(X(i), Y(base[i]+(d[i]||0)));
+      for (let i=n-1;i>=0;i--) g.lineTo(X(i), Y(base[i]));
+      g.closePath(); g.fillStyle = colors[ki]; g.globalAlpha=.85; g.fill(); g.globalAlpha=1; for (let i=0;i<n;i++) base[i]+=d[i]||0; });
+  } else keys.forEach((k,ki) => { const d = get(k); g.beginPath(); g.strokeStyle=colors[ki]; g.lineWidth=1.5;
+      for (let i=0;i<n;i++){ i?g.lineTo(X(i),Y(d[i]||0)):g.moveTo(X(i),Y(d[i]||0)); } g.stroke(); });
+}
+const MB = b => b==null ? '–' : (b/1048576).toFixed(0)+' MB';
+const fmtB = b => b==null ? '–' : b >= 1048576 ? (b/1048576).toFixed(1)+' MB' : b >= 1024 ? (b/1024).toFixed(1)+' kB' : Math.round(b)+' B';
+const ts = t => { const d = new Date(t); return d.toLocaleTimeString([], {hour12:false}) + '.' + String(d.getMilliseconds()).padStart(3,'0'); };
+const esc = s => String(s ?? '').replace(/[<&]/g, c => c === '<' ? '&lt;' : '&amp;');
+const FT = {1:'fifo',2:'chr',4:'dir',6:'blk',8:'file',10:'link',12:'socket'};
+const SIG = {1:'SIGHUP',2:'SIGINT',6:'SIGABRT',9:'SIGKILL',11:'SIGSEGV',15:'SIGTERM'};
+
+function feed(e) {
+  const d = e.d || {}; let c = 'var(--fg)', t = '';
+  if (e.src === 'mark') { c='#e3b341'; t = '▶ ' + d.label; }
+  else if (e.src === 'agent') { c = e.k.startsWith('tool') ? '#f0883e' : '#58a6ff'; t = `agent ${e.k}${d.tool ? ' ' + d.tool : ''} (pid ${e.pid})`; }
+  else if (e.k === 'spawn') { c='#f0883e'; t = `spawn[${d.fn}] → pid ${d.pid}: ${d.file} ${d.args||''}`; }
+  else if (e.k === 'exit') { c='#f0883e'; t = `child exit pid ${d.pid} code=${d.code} sig=${d.signal} after ${d.durMs} ms`; }
+  else if (e.k === 'spawnSync') { c='#d29922'; t = `spawnSync ${d.file} ${d.args||''} — blocked the event loop ${d.durMs} ms`; }
+  else if (e.k === 'http') { c='#3fb950'; t = `http ${d.status||''} ${d.origin}${d.path||''} · ttfb ${d.ttfb} ms · ${d.durMs} ms`; }
+  else if (e.k === 'net') { c='#3fb950'; t = `tcp connect ${d.host}:${d.port}`; }
+  else if (e.k === 'gc') { c='#d2a8ff'; t = `major GC ${d.dur} ms (pid ${e.pid})`; }
+  else if (e.src === 'bpf' && e.k === 'exec') { c = d.by === 'sudo' || /sudo/.test(d.cmd) ? '#f85149' : '#a371f7'; t = `exec ${d.cmd}   (by ${d.by}, pid ${d.pid})`; }
+  else if (e.src === 'bpf' && e.k === 'pexit') { c = d.uid === 0 ? '#f85149' : '#a371f7'; t = `exit ${d.comm} pid ${d.pid} uid ${d.uid} · cpu ${d.cpu_ms} ms · waited ${d.rq_ms} ms · lived ${d.life_ms} ms · read ${fmtB(d.rchar)} write ${fmtB(d.wchar)}`; }
+  else if (e.k === 'tcp') { c='#3fb950'; t = `TCP ${d.comm}(${d.pid}) ${d.local} → ${d.remote}: ${d.from} → ${d.to}`; }
+  else if (e.k === 'signal') { c = d.sig === 9 ? '#f85149' : '#d29922'; t = `signal ${SIG[d.sig]||d.sig} ${d.from} → ${d.to} (result ${d.res})`; }
+  else t = e.k + ' ' + JSON.stringify(d).slice(0,160);
+  return `<div style="color:${c}">${ts(e.t)} ${esc(t)}</div>`;
+}
+
+function onSnap(s) {
+  ROLE_INFO = s.role_info || ROLE_INFO;
+  document.getElementById('harness').textContent = s.harness || '–';
+  document.getElementById('run').textContent = s.run;
+  const ag = s.cg[s.agent_container] || {}, mk = s.cg['lab-mockllm'] || {}, net = (s.net||{})[s.agent_container] || {};
+  document.getElementById('cgcpu').textContent = ag.cpu == null ? '–' : ag.cpu.toFixed(0) + '%';
+  document.getElementById('cgmem').textContent = MB(ag.mem);
+  document.getElementById('cgpeak').textContent = MB(ag.peak);
+  document.getElementById('cgpids').textContent = ag.pids ?? '–';
+  document.getElementById('mockcpu').textContent = mk.cpu == null ? '–' : mk.cpu.toFixed(0) + '%';
+  document.getElementById('net').textContent = net.rx_Bps == null ? '–' : `${fmtB(net.rx_Bps)}/s / ${fmtB(net.tx_Bps)}/s`;
+  document.getElementById('load').textContent = s.vm && s.vm.load ? s.vm.load.slice(0,3).join(' ') : '–';
+  const procs = s.procs.filter(p => p.cg === s.agent_container);
+  const agents = procs.filter(p => p.role === 'agent' || p.role === 'agent:nested');
+  document.getElementById('nagent').textContent = agents.length;
+  S.t.push(s.t);
+  const present = new Set(Object.keys(s.roles || {}));
+  for (const r of ROLE_ORDER.concat([...present])) { (S.roles[r] = S.roles[r] || new Array(S.t.length - 1).fill(0)).push((s.roles||{})[r] || 0); }
+  let rss = 0, heap = 0, elu = 0, lag = 0;
+  agents.forEach(p => rss += p.rss * 1024);
+  Object.values(s.probes || {}).forEach(pr => { heap += pr.heapUsed || 0; elu = Math.max(elu, (pr.elu||0)*100); lag = Math.max(lag, pr.lag99||0); });
+  S.mem.push((ag.mem||0)/1048576); S.rss.push(rss/1048576); S.heap.push(heap/1048576); S.elu.push(elu); S.lag.push(lag);
+  S.rx.push(net.rx_Bps||0); S.tx.push(net.tx_Bps||0); S.lo.push(net.lo_Bps||0);
+  for (const k of Object.keys(S)) { if (k === 'roles') { for (const r in S.roles) if (S.roles[r].length > W) S.roles[r].shift(); } else if (S[k].length > W) S[k].shift(); }
+  const active = Object.keys(S.roles).filter(r => S.roles[r].some(v => v > 0)).sort((a,b) => ROLE_ORDER.indexOf(a) - ROLE_ORDER.indexOf(b));
+  draw('cpu', active, active.map(roleColor), {stack:true, roles:true, max:10});
+  document.getElementById('rolelegend').innerHTML = active.map(r => `<span><i style="background:${roleColor(r)}"></i>${esc(roleName(r))}</span>`).join('') || '<span>no agent activity yet</span>';
+  draw('mem', ['mem','rss','heap'], ['#79c0ff','#58a6ff','#d2a8ff'], {max:10});
+  draw('loop', ['elu','lag'], ['#58a6ff','#f85149'], {max:10});
+  draw('netc', ['rx','tx','lo'], ['#3fb950','#f0883e','#8b949e'], {max:1024});
+  // threads
+  document.querySelector('#thr tbody').innerHTML = (s.threads||[]).sort((a,b) => b.cpu - a.cpu).slice(0,40).map(t => `<tr><td class="l">${t.pid}</td><td class="l">${esc(t.name)}</td><td>${t.cpu.toFixed(1)}</td><td style="text-align:left"><span class="bar" style="width:${Math.min(90,t.cpu)}px;background:#58a6ff"></span></td><td>${t.rq_ms_per_s}</td><td>${t.core??''}</td><td>${t.st}</td></tr>`).join('');
+  const agg = s.agg || {};
+  document.querySelector('#sys tbody').innerHTML = (agg.syscalls||[]).map(r => `<tr><td class="l">${esc(r[0])}</td><td class="l">${esc(r[1])}</td><td>${r[2]}</td></tr>`).join('');
+  document.querySelector('#files tbody').innerHTML = (agg.files||[]).map(r => `<tr><td class="l">${r[0]==='FW'?'write':'read'}</td><td class="l">${esc(r[1])}</td><td class="l">${FT[r[2]]||r[2]}</td><td class="l" style="max-width:220px;overflow:hidden;text-overflow:ellipsis">${esc(r[3])}</td><td>${fmtB(r[4])}</td></tr>`).join('');
+  document.querySelector('#netp tbody').innerHTML = (agg.net||[]).map(r => `<tr><td class="l">${esc(r[0])}</td><td class="l">${r[1]}</td><td>${fmtB(r[2])}</td></tr>`).join('');
+  document.getElementById('opens').textContent = agg.opens != null ? `openat() calls last second: ${agg.opens}` : '';
+  // process tree
+  const byPid = {}; procs.forEach(p => byPid[p.pid] = p);
+  const kids = {}; procs.forEach(p => (kids[p.ppid] = kids[p.ppid] || []).push(p));
+  const rows = []; const walk = (p, d) => { rows.push([p, d]); (kids[p.pid]||[]).sort((a,b)=>a.pid-b.pid).forEach(c => walk(c, d+1)); };
+  procs.filter(p => !byPid[p.ppid]).sort((a,b)=>a.pid-b.pid).forEach(r => walk(r, 0));
+  document.querySelector('#ptab tbody').innerHTML = rows.map(([p, d]) => {
+    const pr = (s.probes||{})[String(p.nspid)]; const col = roleColor(p.role);
+    return `<tr><td>${p.pid}</td><td>${p.nspid??''}</td><td>${p.ppid}</td><td class="${p.uid===0?'root':''}">${p.uid??''}</td><td>${p.st}</td><td>${p.cpu.toFixed(1)}</td><td style="text-align:left"><span class="bar" style="width:${Math.min(110,p.cpu)}px;background:${col}"></span></td><td>${(p.rss/1024).toFixed(1)}</td><td>${p.thr}</td><td>${p.rq_ms}</td><td>${pr?((pr.heapUsed||0)/1048576).toFixed(1):''}</td><td>${pr?((pr.elu||0)*100).toFixed(0)+'%':''}</td><td class="l" style="color:${col}">${esc(p.label)}</td><td class="cmd">${'&nbsp;&nbsp;'.repeat(d)}${d?'└ ':''}${esc((p.cmd||'').slice(0,220))}</td></tr>`;
+  }).join('');
+  document.getElementById('feed').innerHTML = (s.events||[]).slice().reverse().map(feed).join('');
+}
+const es = new EventSource('/stream?every=0.25');
+es.onmessage = ev => { try { onSnap(JSON.parse(ev.data)); } catch (e) { console.error(e); } };
+</script>
+</body>
+</html>
