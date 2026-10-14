@@ -75,6 +75,16 @@ svg .grid line{stroke:var(--line)}
 .title-art{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:26px 0}
 .title-art div{height:8px;border-radius:4px}
 .step-n{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:15px;margin-right:8px;vertical-align:4px}
+.slide.wide{max-width:1560px}
+.gl{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+.gl .card{padding:12px 14px;border-top:4px solid var(--c)}
+.gl h3{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.gl h3 i{width:10px;height:10px;border-radius:3px;background:var(--c);display:inline-block}
+.term{font-size:13px;line-height:1.36;margin:0 0 4px}
+.term b{font-weight:700}
+.term .ex{display:inline-block;font-size:11.5px;color:var(--muted);background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:3px;white-space:nowrap}
+.units{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;margin-top:12px;padding:9px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+@media (max-width:900px){.gl{grid-template-columns:1fr}}
 .tree{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;background:var(--soft);border-radius:10px;padding:10px 12px;overflow-x:auto}
 nav#bar{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:8px 16px;z-index:10}
 nav#bar button{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:9px;padding:6px 14px;font:inherit;cursor:pointer}
@@ -212,6 +222,63 @@ S.push({ t: "Title", h: `
 <p class="muted small">pi 0.87.1 · Node 24 · Docker Desktop VM on an Apple M5 Max (18 vCPU, 11.6 GB) · 24 scenarios on a mock model plus 3 on a real model: 27 runs, each in a fresh container</p>
 <p class="small"><span class="chip">← → or space to move</span><span class="chip">O = all slides</span><span class="chip">◐ = light / dark</span></p>
 </div>` });
+
+S.push({ t: "Glossary: every metric", w: 1, h: `
+${head(0, "Every metric and resource in this deck, in plain words", "Glossary")}
+<div class="gl">
+<div class="card" style="--c:var(--cpu)"><h3><i></i>CPU</h3>
+<div class="term"><b>Wall time</b>: stopwatch time from start to finish. <span class="ex">191.8 ms one-turn chat</span></div>
+<div class="term"><b>CPU time</b>: time cores spent running this program, added up over all its threads, so it can be more than wall time. <span class="ex">246.5 ms</span></div>
+<div class="term"><b>User / system CPU</b>: user = running pi's own code; system = the kernel working for pi (syscalls, page faults). <span class="ex">170 / 23 ms up to the first request</span></div>
+<div class="term"><b>Cores busy (vCPUs)</b>: CPU time ÷ wall time. 1.3 = one core flat out plus a third of another. <span class="ex">≈1.3 at startup</span></div>
+<div class="term"><b>ms/s</b>: CPU milliseconds used per second of wall time; 10 ms/s = 1% of one core. <span class="ex">TUI 185 ms/s</span></div>
+<div class="term"><b>Run-queue wait</b>: time a thread was ready to run but every core was taken. Grows when the machine is crowded. <span class="ex">1.72 ms per ms at 32 agents</span></div>
+</div>
+<div class="card" style="--c:var(--mem)"><h3><i></i>Memory</h3>
+<div class="term"><b>RSS</b>: all RAM pages the process holds right now, including code shared with other processes. <span class="ex">146.5 MiB peak</span></div>
+<div class="term"><b>Private / shared</b>: private pages belong to this process only (each extra agent adds these); shared ones (node binary, libraries) are paid once. <span class="ex">≈78 / 50 MiB</span></div>
+<div class="term"><b>JS heap</b>: memory V8 manages for JavaScript objects; <i>used</i> = live objects, <i>total</i> = reserved. <span class="ex">22 / 37 MiB</span></div>
+<div class="term"><b>External</b>: memory outside the heap, such as Buffers holding file and network data. <span class="ex">13 MiB</span></div>
+<div class="term"><b>Page fault</b>: first touch of a memory page. Minor = filled from RAM; major = had to wait for the disk. <span class="ex">19,107 minor · 0 major</span></div>
+<div class="term"><b>GC</b>: V8 freeing objects no longer used; minor (young objects, quick) or major (whole heap). <span class="ex">0.12 ms per turn</span></div>
+<div class="term"><b>Container memory</b>: everything the container's cgroup is charged for, across all its processes. <span class="ex">≈18 + 102 MiB × agents</span></div>
+</div>
+<div class="card" style="--c:var(--sys)"><h3><i></i>Kernel &amp; syscalls</h3>
+<div class="term"><b>Syscall</b>: a request from a program to the kernel. Everything outside pure computation goes through one. <span class="ex">5,022 before the first request</span></div>
+<div class="term"><b>read / write</b> move bytes to or from files, pipes and sockets · <b>openat / close</b> open and close files · <b>statx / faccessat</b> look up a file's details or whether it exists</div>
+<div class="term"><b>mmap / munmap / brk / madvise</b> get or give back memory · <b>mprotect</b> change page permissions (V8 flips code pages between writable and executable)</div>
+<div class="term"><b>futex</b> threads waiting for or waking each other · <b>epoll_pwait</b> sleep until a socket or timer needs attention</div>
+<div class="term"><b>clone</b> create a thread or process · <b>execve</b> turn a process into another program · <b>wait4</b> collect a finished child</div>
+<div class="term"><b>Context switch</b>: a thread leaves its core. Voluntary = it chose to wait; forced = the scheduler took the core away. <span class="ex">477 voluntary · 0 forced</span></div>
+</div>
+<div class="card" style="--c:var(--disk)"><h3><i></i>Disk &amp; files</h3>
+<div class="term"><b>File cache</b>: the kernel's RAM copy of recently used files. Reads served from it never touch the disk. <span class="ex">4.5 MB of code, 0 B from disk</span></div>
+<div class="term"><b>Bytes via syscalls</b> (rchar / wchar): everything passed through read and write calls, whether from cache, pipes or sockets. <span class="ex">4.81 MB read</span></div>
+<div class="term"><b>Storage reads / writes</b>: bytes that actually reached the disk device. <span class="ex">0 / ≈8 KB over a whole one-turn run</span></div>
+<div class="term"><b>fsync</b>: “write this file to the disk now”. pi never calls it, so a crash can lose the end of a session. <span class="ex">0 calls</span></div>
+<div class="term"><b>Session file</b>: pi's conversation log, one JSON line per entry, append-only. <span class="ex">7.1 KB after one turn</span></div>
+<div class="term"><b>Spill file</b>: <code>/tmp/pi-bash-*.log</code>, the full output of any big bash command, kept forever. <span class="ex">55.8 MB from 3 commands</span></div>
+</div>
+<div class="card" style="--c:var(--net)"><h3><i></i>Network</h3>
+<div class="term"><b>Bytes sent / received</b>: data on the wire. ↑ is upload to the model, ↓ is its reply. <span class="ex">6.4 KB ↑ · 10.1 KB ↓</span></div>
+<div class="term"><b>Packets</b>: the pieces data is split into on the network. <span class="ex">7 out · 5 in</span></div>
+<div class="term"><b>DNS lookup</b>: turning a name (<code>mockllm</code>) into an IP address. <span class="ex">25 B out · 48 B in</span></div>
+<div class="term"><b>TCP connection / keep-alive</b>: a reliable pipe to the server; keep-alive reuses it for every request. <span class="ex">1 for 201 requests</span></div>
+<div class="term"><b>HTTP request &amp; headers</b>: the message sent to the model API; headers are its metadata. <span class="ex">≈680 B of headers</span></div>
+<div class="term"><b>Streaming (SSE chunks)</b>: the reply arrives as many small events, a few characters each. <span class="ex">50 chunks for 202 chars</span></div>
+<div class="term"><b>TLS</b>: the encryption layer of HTTPS, used with the real provider. <span class="ex">1 TLS connection in R1</span></div>
+</div>
+<div class="card" style="--c:var(--proc)"><h3><i></i>Processes &amp; threads</h3>
+<div class="term"><b>Process</b>: a running program with its own memory (pi, bash, rg). <span class="ex">94 for apt-get update</span></div>
+<div class="term"><b>Thread</b>: a worker inside a process, sharing its memory. <span class="ex">pi starts 12, 11 alive at once</span></div>
+<div class="term"><b>pi's threads</b>: main (runs all JavaScript), 4 V8 workers (compile + GC), 4 libuv workers (file and DNS jobs), a signal thread and a timer thread, plus a helper that exits after ~70 ms.</div>
+<div class="term"><b>fork → exec</b>: fork copies a process, exec turns the copy into a new program. That's how every tool starts. <span class="ex">338–671 µs per fork</span></div>
+<div class="term"><b>Child / orphan</b>: a child is a process pi started; an orphan outlives its parent (setsid, background jobs, root via sudo).</div>
+<div class="term"><b>Process group &amp; SIGKILL</b>: a parent and its children; SIGKILL is the instant, unstoppable kill pi uses on timeouts.</div>
+<div class="term"><b>Container / cgroup</b>: an isolated environment; its cgroup is the kernel's box for counting and limiting CPU and memory.</div>
+</div>
+</div>
+<div class="units"><b>Units</b><span>ms = 1/1,000 s</span><span>µs = 1/1,000,000 s</span><span>KB / MB = 1,000 / 1,000,000 bytes (disk, network)</span><span>MiB = 1,048,576 bytes (memory)</span><span>“broken cache” = compile cache off, as in the lab runs</span></div>` });
 
 S.push({ t: "The 7 things we measure", h: `
 ${head(0, "The 7 things we measure", "How to read this deck")}
@@ -581,7 +648,7 @@ ${head(0, "The resource model on one slide", "Cheat sheet")}
 <tr><td><b style="color:var(--net)">Total upload</b></td><td>≈ (T+1) × base + growth × T(T+1)/2 → <b>quadratic</b></td></tr>
 <tr><td><b style="color:var(--disk)">Session file</b></td><td>≈ 7.1 KB + 0.84–1.07 KB per turn + 1.06 × tool output</td></tr>
 <tr><td><b style="color:var(--disk)">Temp files</b></td><td>every bash output over 50 KB, kept forever</td></tr>
-<tr><td><b style="color:var(--proc)">Threads</b></td><td>always 12 per pi process</td></tr>
+<tr><td><b style="color:var(--proc)">Threads</b></td><td>12 started per pi process (11 alive at once)</td></tr>
 <tr><td><b style="color:var(--proc)">Processes</b></td><td>bash 1 · grep 2 · find 1–3 · parallel calls: unlimited</td></tr>
 </table></div></div>
 <div class="take">The shape in one line: <b>a big fixed start (~0.25 s CPU, ~150 MiB), a cheap turn (~5 ms), and costs that grow with conversation length</b>, with memory, not CPU, the first thing to run out.</div>` });
@@ -630,7 +697,7 @@ ${head(0, "How this was measured, and how far to trust it", "Method")}
 
 // ---------- deck runtime ----------
 const deck = document.getElementById("deck");
-deck.innerHTML = S.map((s, i) => `<section class="slide" id="s${i}" aria-label="${esc(s.t)}">${s.h}</section>`).join("");
+deck.innerHTML = S.map((s, i) => `<section class="slide${s.w ? " wide" : ""}" id="s${i}" aria-label="${esc(s.t)}">${s.h}</section>`).join("");
 document.getElementById("ovlist").innerHTML = S.map((s, i) => `<a href="#${i + 1}" onclick="toggleOv()"><span>${i + 1}</span>${esc(s.t)}</a>`).join("");
 let cur = 0;
 function go(i) {
@@ -647,7 +714,7 @@ function fit(el) {
   el.style.zoom = 1;
   if (innerWidth < 1100) return;
   const top = el.getBoundingClientRect().top, bottom = Math.max(...[...el.children].map((c) => c.getBoundingClientRect().bottom)) - top + 24;
-  const z = Math.max(1, Math.min(1.35, (innerWidth - 40) / 1240, (innerHeight - 64) / bottom));
+  const z = Math.max(1, Math.min(1.35, (innerWidth - 40) / (el.classList.contains("wide") ? 1600 : 1240), (innerHeight - 64) / bottom));
   el.style.zoom = z.toFixed(3);
 }
 addEventListener("resize", () => fit(document.getElementById("s" + cur)));
