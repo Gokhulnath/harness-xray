@@ -40,11 +40,29 @@ def load_meta(rd):
 EXIT_SUM = ("minflt", "majflt", "nvcsw", "nivcsw", "rqdelay", "slices", "rchar", "wchar", "syscr", "syscw", "rbytes", "wbytes")
 
 
+_idle_cache = {}
+
+
+def late_events(rd, t0, t1, pids):
+    """eBPF rows that reached the monitor after the runner had already switched it to the harness's idle
+    file (the last per-second dump of a short run can arrive late). Pids are unique per fresh container,
+    so rows for this run's processes inside [t0 - 1 s, t1 + 15 s] belong to this run."""
+    idle = os.path.join(os.path.dirname(os.path.dirname(rd)), "idle", "proc-events.jsonl")
+    if idle not in _idle_cache:
+        _idle_cache[idle] = jl(idle)
+    return [e for e in _idle_cache[idle] if e.get("pid") in pids and t0 - 1000 <= (e.get("t") or 0) <= t1 + 15000]
+
+
 def load_procs(rd, agent_match=None):
     """-> procs {pid: {...}}, threads {(pid,tid): {...}}, events list.
     CPU per thread = max(runtime at exit, runtime at final context switch); process = sum over threads.
     Peak RSS = max over threads of the memory map at do_exit (hiwater vs current, pages*4)."""
     ev = jl(os.path.join(rd, "proc-events.jsonl"))
+    meta = load_meta(rd)
+    if meta.get("t0") and meta.get("t1"):
+        pids = {e.get("pid") for e in ev if e.get("pid") is not None}
+        seen = {json.dumps(e, sort_keys=True) for e in ev if e["e"] in ("SY", "FR", "FW", "OP", "NT", "E", "D", "M")}
+        ev += [e for e in late_events(rd, meta["t0"], meta["t1"], pids) if json.dumps(e, sort_keys=True) not in seen]
     threads, execs, argv = {}, collections.defaultdict(list), {}
     first_exec, fork_parent = {}, {}
     for e in ev:

@@ -51,6 +51,7 @@ function selfStat() {
 
 out({
 	k: "start",
+	pv: 2, // probe version: 2 = correct GC kind labels
 	t: now(),
 	pid: process.pid,
 	ppid: process.ppid,
@@ -128,7 +129,9 @@ setInterval(() => {
 
 // ---------- GC ----------
 try {
-	const kinds = { 1: "minor", 2: "major", 4: "incremental", 8: "weakcb", 16: "minor-ms" };
+	// labels from Node's own constants (MINOR=1 scavenge, MINOR_MARK_SWEEP=2, MAJOR=4, INCREMENTAL=8, WEAKCB=16)
+	const C = require("perf_hooks").constants;
+	const kinds = { [C.NODE_PERFORMANCE_GC_MINOR]: "minor", [C.NODE_PERFORMANCE_GC_MINOR_MARK_SWEEP]: "minor-mark-sweep", [C.NODE_PERFORMANCE_GC_MAJOR]: "major", [C.NODE_PERFORMANCE_GC_INCREMENTAL]: "incremental", [C.NODE_PERFORMANCE_GC_WEAKCB]: "weakcb" };
 	const obs = new PerformanceObserver((list) => {
 		for (const e of list.getEntries()) {
 			const kind = e.detail ? e.detail.kind : e.kind;

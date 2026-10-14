@@ -517,7 +517,7 @@ def run(sc):
     t1 = time.time()
     mark(f"end {name}")
     time.sleep(3.0)
-    post(f"{MON}/control/flush")
+    post(f"{MON}/control/sync?after={int(t1 * 1000) + 1500}&timeout=20")  # last per-second eBPF dump must land in this run
     disk, leftovers = postflight()
     meta = {"name": name, "harness": HNAME, "harness_display": H.get("display"), "desc": sc["desc"], "t0": t0 * 1000, "t1": t1 * 1000, "wall_s": round(t1 - t0, 3),
             "steps": steps, "disk_usage": disk, "leftover_processes": leftovers, "agent_match": H.get("agent_match"), "container": container}

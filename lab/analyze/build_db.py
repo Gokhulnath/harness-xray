@@ -155,7 +155,10 @@ def load_run(con, harness, rd):
                                                                                     (end.get("cut") or 0) + (end.get("cst") or 0), end.get("fsWrite"), end.get("volCtx"), end.get("involCtx"), end.get("code")))
         ins(con, "probe_samples", [(*HR, pid, s["t"], s["dt"], s["u"], s["sy"], s["elu"], s["lag50"], s["lag99"], s["lagMax"], s["rss"], s["heapUsed"], s["heapTotal"], s["ext"], s["ab"], s.get("mallocd"), s.get("thr"), s.get("cut"), s.get("cst"), json.dumps(s.get("h", {}))) for s in d["s"]])
         ins(con, "heap_spaces", [(*HR, pid, h["t"], sp[0], sp[1], sp[2]) for h in d["heap"] for sp in h["spaces"]])
-        ins(con, "gc", [(*HR, pid, g["t"], str(g["kind"]), g["dur"]) for g in d["gc"]])
+        # probe v1 shifted GC labels (it mapped Node's MAJOR=4 to "incremental", INCREMENTAL=8 to "weakcb")
+        v1 = not (d["start"] and d["start"][0].get("pv"))
+        relabel = {"major": "minor-mark-sweep", "incremental": "major", "weakcb": "incremental", "minor-ms": "weakcb"} if v1 else {}
+        ins(con, "gc", [(*HR, pid, g["t"], relabel.get(str(g["kind"]), str(g["kind"])), g["dur"]) for g in d["gc"]])
         exits = {x["id"]: x for x in d["exit"]}
         ins(con, "spawns", [(*HR, pid, s["id"], s["t"], s["fn"], s["file"], s.get("args"), s.get("pid"), int(bool(s.get("detached"))), s.get("cwd"), exits.get(s["id"], {}).get("t"), exits.get(s["id"], {}).get("code"), exits.get(s["id"], {}).get("signal"), exits.get(s["id"], {}).get("durMs")) for s in d["spawn"]])
         ins(con, "spawn_sync", [(*HR, pid, s["t"], s["fn"], s["file"], s.get("args"), s["durMs"], str(s.get("status"))) for s in d["spawnSync"]])

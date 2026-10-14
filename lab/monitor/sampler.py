@@ -661,7 +661,7 @@ BPF_FIELDS = {
 BPF_STR = {"comm", "file", "a1", "a2", "a3", "a4", "saddr", "daddr", "tcomm", "dir", "name", "kind", "rwbs"}
 TCP_ST = {1: "ESTABLISHED", 2: "SYN_SENT", 3: "SYN_RECV", 4: "FIN_WAIT1", 5: "FIN_WAIT2", 6: "TIME_WAIT", 7: "CLOSE", 8: "CLOSE_WAIT", 9: "LAST_ACK", 10: "LISTEN", 11: "CLOSING"}
 pending_agg = collections.defaultdict(list)
-bpf_state = {"cid": None, "ready": False, "started": None}
+bpf_state = {"cid": None, "ready": False, "started": None, "last_tick_t": 0}
 
 
 def bpf_parse(line):
@@ -716,6 +716,7 @@ def bpf_handle(line):
         return
     if k == "TICK":
         bpf_state["ready"] = True
+        bpf_state["last_tick_t"] = rec["t"]
         t = rec["t"]  # aggregates printed just before this tick cover the preceding second
         with bpf_lock:
             if bpf_f:
@@ -834,6 +835,15 @@ class Handler(BaseHTTPRequestHandler):
             os.sync()
             open("/proc/sys/vm/drop_caches", "w").write("3\n")
             self._json({"ok": True, "dropped": True})
+        elif u.path == "/control/sync":
+            # block until the eBPF reader has processed a tick newer than `after` (epoch ms), so a run's
+            # last per-second aggregates land in that run's files before the runner switches away
+            after = float(q.get("after", [time.time() * 1000])[0])
+            deadline = time.time() + float(q.get("timeout", ["15"])[0])
+            while bpf_state["last_tick_t"] <= after and time.time() < deadline:
+                time.sleep(0.1)
+            flush()
+            self._json({"ok": bpf_state["last_tick_t"] > after, "last_tick_t": bpf_state["last_tick_t"]})
         elif u.path == "/control/flush":
             flush()
             self._json({"ok": True})
