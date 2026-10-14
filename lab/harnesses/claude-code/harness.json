@@ -1,8 +1,8 @@
 {
   "name": "claude-code",
-  "display": "Claude Code (@anthropic-ai/claude-code 2.1.299)",
-  "runtime": "node",
-  "probe": "node",
+  "display": "Claude Code (@anthropic-ai/claude-code 2.1.299, Bun/JavaScriptCore native binary)",
+  "runtime": "bun",
+  "probe": "none",
   "protocol": "anthropic",
   "agent_match": "(^|/)claude( |$)|claude-code/cli",
   "version_cmd": [
@@ -63,5 +63,5 @@
   "events": "claude-stream-json",
   "features": [],
   "notes": "Speaks Anthropic Messages to the mock. Onboarding, trust dialog and API-key approval are pre-accepted in ~/.claude.json. Model names are real Claude ids so Claude Code applies correct context limits; the mock ignores them. This Claude Code version ships no Grep/Glob/LS tools: grep/find/ls intents fall back to Bash (rg/find/ls).",
-  "status": "adapter written; not yet validated against the lab (pi is the validated harness)"
+  "status": "validated on 17 scenarios (2026-10-14); runs as a Bun native binary, so the Node in-process probe does not apply"
 }
