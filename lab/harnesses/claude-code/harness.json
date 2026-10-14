@@ -12,11 +12,11 @@
   "env": {
     "ANTHROPIC_BASE_URL": "http://mockllm:8080",
     "ANTHROPIC_API_KEY": "sk-ant-lab-mock-key-000000000000",
-    "ANTHROPIC_MODEL": "mock-1",
-    "ANTHROPIC_SMALL_FAST_MODEL": "mock-1",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "mock-1",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "mock-1",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "mock-1",
+    "ANTHROPIC_MODEL": "claude-sonnet-4-5-20250929",
+    "ANTHROPIC_SMALL_FAST_MODEL": "claude-haiku-4-5-20251001",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5-20251001",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-5-20250929",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4-1-20250805",
     "DISABLE_AUTOUPDATER": "1",
     "IS_SANDBOX": "1"
   },
@@ -62,6 +62,6 @@
   },
   "events": "claude-stream-json",
   "features": [],
-  "notes": "Speaks Anthropic Messages to the mock. Onboarding, trust dialog and API-key approval are pre-accepted in ~/.claude.json.",
+  "notes": "Speaks Anthropic Messages to the mock. Onboarding, trust dialog and API-key approval are pre-accepted in ~/.claude.json. Model names are real Claude ids so Claude Code applies correct context limits; the mock ignores them. This Claude Code version ships no Grep/Glob/LS tools: grep/find/ls intents fall back to Bash (rg/find/ls).",
   "status": "adapter written; not yet validated against the lab (pi is the validated harness)"
 }

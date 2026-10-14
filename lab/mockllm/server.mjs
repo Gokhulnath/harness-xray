@@ -124,13 +124,17 @@ const ALIASES = {
 };
 const propsOf = (t) => Object.keys((t.schema && t.schema.properties) || {});
 const pick = (names, cands) => cands.find((c) => names.includes(c));
+// tools that must never receive a scripted file/shell intent (network, orchestration, scheduling)
+const NOT_FOR_INTENTS = /web|fetch|url|browser|agent|workflow|cron|skill|notebook|worktree|task|message|wakeup|finding|todo|mcp|plan/i;
 function findTool(tools, intent) {
 	for (const re of ALIASES[intent] || []) {
-		const t = tools.find((x) => re.test(x.name) && (intent === "shell" || !/shell|bash|command/i.test(x.name)));
+		const t = tools.find((x) => re.test(x.name) && !NOT_FOR_INTENTS.test(x.name) && (intent === "shell" || !/shell|bash|command/i.test(x.name)));
 		if (t) return t;
 	}
 	return null;
 }
+// a request is part of the scripted agent loop only if it offers at least one core tool
+const isCoreToolset = (tools) => ["shell", "read", "write", "edit"].some((k) => findTool(tools, k));
 function fillRequired(t, args) {
 	const req = (t.schema && t.schema.required) || [];
 	const p = (t.schema && t.schema.properties) || {};
@@ -480,7 +484,7 @@ const server = http.createServer(async (req, res) => {
 	const freshPrompt = lastMsg && lastMsg.role === "user" && /SCENARIO:/.test(lastMsg.text);
 	// Requests without tools are auxiliary (compaction summaries, titles, topic checks, quota probes):
 	// answer with text and do not advance the scenario.
-	const aux = norm.tools.length === 0;
+	const aux = norm.tools.length === 0 || !isCoreToolset(norm.tools);
 	const sid = sessionId(req, body, norm);
 	let scn = null, step = 0, st = null;
 	if (!aux) {
