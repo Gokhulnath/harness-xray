@@ -1031,6 +1031,12 @@ The two harnesses differ by 2–20x on most axes. The data points to these desig
 
 ## 13. Caveats
 
+- **pi's compile cache was broken in the lab image (found afterwards).** pi calls Node's
+  `enableCompileCache()`, but `npm install -g` ran as root at build and left `/tmp/node-compile-cache`
+  owned by root, so every pi start compiled its bundle from scratch. With a working cache, a pi one-turn
+  chat costs about 26 ms less CPU and 14 MiB less RSS (no-probe medians: 227.9 → 202.0 ms, 133.2 → 119.3
+  MiB; `REPORT.md` Part 5.3, fix 4). Claude Code is a Bun binary and is unaffected. Claude Code still
+  starts cheaper than pi, but by less than the 172 vs 247 ms shown here; a like-for-like re-run is pending.
 - **Mock mapping.** Claude Code 2.1.299 has no LS, Grep or Glob tools, so ls/grep/find intents become
   Bash commands with larger outputs and extra processes (`mock_requests.reply_json` `mapped`). This
   confounds 03, 05 and 17. pi's `find` failed on every call (fdfind 8.x rejects `--no-require-git`), and

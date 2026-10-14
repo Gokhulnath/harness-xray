@@ -602,7 +602,7 @@ function renderNav() {
   const item = (href, label, k) => `<a class="item ${cur === href ? "on" : ""}" href="${href}">${esc(label)}${k ? `<span class="k">${esc(k)}</span>` : ""}</a>`;
   $("#nav").innerHTML = item(`#/h/${h}/overview`, "Overview") + item(`#/h/${h}/compare`, "Comparisons") + item("#/predictions", "Predictions scorecard") + item("#/harnesses", "Harnesses side by side") +
     H.groups.map(([g, rs]) => `<div class="grp">${esc(g)}</div>` + rs.map((r) => item(`#/h/${h}/run/${r}`, r, fmt.ms(H.runs[r].kpi.cpu_ms))).join("")).join("") +
-    `<div class="grp">Docs</div>` + item("#/doc/REPORT.md", "Report") + item("#/doc/ARCHITECTURE.md", "pi architecture") + item("#/doc/RESEARCH.md", "Existing tools survey") + item("#/doc/DATA.md", "Data & SQL guide") + item("#/doc/README.md", "Lab README");
+    `<div class="grp">Docs</div>` + item("#/doc/REPORT.md", "Report") + item("#/doc/HARNESS-COMPARISON.md", "pi vs Claude Code") + item("#/doc/ARCHITECTURE.md", "pi architecture") + item("#/doc/RESEARCH.md", "Existing tools survey") + item("#/doc/DATA.md", "Data & SQL guide") + item("#/doc/README.md", "Lab README");
 }
 
 async function route() {

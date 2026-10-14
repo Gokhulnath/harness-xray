@@ -367,7 +367,7 @@ def main():
     index["role_info"] = ROLE_INFO
     json.dump(index, open(os.path.join(OUT, "index.json"), "w"), indent=1, default=str)
     os.makedirs(os.path.join(OUT, "docs"), exist_ok=True)
-    for src in (os.path.join(ROOT, "docs", "ARCHITECTURE.md"), os.path.join(ROOT, "docs", "RESEARCH.md"), os.path.join(ROOT, "docs", "DATA.md"), os.path.join(ROOT, "reports", "REPORT.md"), os.path.join(LAB, "README.md")):
+    for src in (os.path.join(ROOT, "docs", "ARCHITECTURE.md"), os.path.join(ROOT, "docs", "RESEARCH.md"), os.path.join(ROOT, "docs", "DATA.md"), os.path.join(ROOT, "reports", "REPORT.md"), os.path.join(ROOT, "reports", "HARNESS-COMPARISON.md"), os.path.join(LAB, "README.md")):
         if os.path.exists(src):
             shutil.copy(src, os.path.join(OUT, "docs", os.path.basename(src)))
     print("index.json written")

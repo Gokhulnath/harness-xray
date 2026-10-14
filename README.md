@@ -26,7 +26,8 @@ lab-monitor (privileged): bpftrace (exec/fork/exit, exact CPU + peak RSS per pro
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | how pi works inside (process model, agent loop, tools, memory, network, security), from its source, with 15 testable predictions |
 | [`docs/DATA.md`](docs/DATA.md) | every trace file, database table and column, and example SQL |
 | [`docs/RESEARCH.md`](docs/RESEARCH.md) | survey of existing tools (eBPF tracers, agent observability, mock LLMs, harness endpoints) |
-| `reports/REPORT.md` | measured findings for pi (added after the full sweep is analyzed) |
+| [`reports/REPORT.md`](reports/REPORT.md) | how pi consumes CPU, memory, disk, network, processes and threads, step by step, with a reusable resource model (Opus analysts + adversarial verifiers) |
+| [`reports/HARNESS-COMPARISON.md`](reports/HARNESS-COMPARISON.md) | pi vs Claude Code, same scenarios side by side |
 
 ## Quick start
 
