@@ -18,7 +18,7 @@ lab/explorer/data/                explorer bundles (rebuild: python3 analyze/bui
 |---|---|---|
 | `meta.json` | runner (`run.py`) | scenario, harness, start/end time, every step (command, mode, wall time, exit code, shell output), disk usage after the run, processes left behind |
 | `samples.jsonl` | monitor (`sampler.py`) | `k=meta` one line per new process (pid, container pid, parent, uid, cmdline, container); `k=t` every 100 ms: all processes, all threads, cgroup counters for each lab container, container network counters, VM-wide CPU/memory/pressure; `k=slow` every 1 s: memory maps (smaps_rollup + status), open-fd kinds, socket inodes, TCP connection tables; `k=mark` runner markers |
-| `proc-events.jsonl` | monitor (bpftrace, `proctrace.bt`) | kernel events for the agent container's cgroup: `A` execve (file + argv), `X` exec done, `F` fork/clone, `E` thread exit (exact CPU, run-queue wait, I/O accounting, faults, context switches), `D` final context switch (complete CPU), `M` memory map at exit (real peak RSS), `T` TCP state change, `S` signal; per-second aggregates `SY` syscalls, `FR`/`FW` file reads/writes, `OP` opens, `NT` network bytes, `BK` block I/O |
+| `proc-events.jsonl` | monitor (bpftrace, `proctrace.bt`) | kernel events for the agent container's cgroup: `A` execve (file + argv as seen at syscall entry), `X` exec done, `V` full argv read from the new process image right after exec (complete even when `A` could not read the strings), `F` fork/clone, `E` thread exit (exact CPU, run-queue wait, I/O accounting, faults, context switches), `D` final context switch (complete CPU), `M` memory map at exit (real peak RSS), `T` TCP state change, `S` signal; per-second aggregates `SY` syscalls, `FR`/`FW` file reads/writes, `OP` opens, `NT` network bytes, `BK` block I/O |
 | `syscalls.json` | monitor | syscall number → name for this kernel (arm64) |
 | `probe-<pid>.jsonl` | in-process probe (`probe/probe.cjs`, Node agents only) | `start`, `s` every 100 ms (CPU, ELU, loop lag, RSS, heap, external, array buffers, children CPU, active handles), `heap` (V8 spaces), `gc`, `spawn`/`exit`/`spawnSync`/`worker`, `http`, `net`, `sockclose` (bytes per connection), `ru` (resourceUsage each second), `ev` (agent JSON events with in-process timestamps), `tok` (streamed-token event counts), `end` |
 | `mockllm.jsonl` | mock LLM | every model request: protocol, model, step, session id, request bytes, message count, tool names and schema bytes, system prompt size, tool-result bytes, max tokens, reply (tool calls + how each intent mapped onto the harness's tools), injected errors, timing |
@@ -56,7 +56,7 @@ Every process gets one explicit role (`monitor/labclass.py`); there is no catch-
 
 | Role | Meaning |
 |---|---|
-| `agent` | the harness process (matched by the adapter's `agent_match` regex) |
+| `agent` | the harness process (the adapter's `agent_match` regex on its command line, or on its process title when it runs under a runtime such as node and its argv was not captured) |
 | `agent:nested` | an agent started by another agent (subagents) |
 | `tool:shell` | a shell the agent spawned for a tool call |
 | `tool:command` | a program a tool call ran (python3, seq, uname, apt-get's helpers...) |

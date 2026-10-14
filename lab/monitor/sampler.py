@@ -644,6 +644,7 @@ BOOT_OFFSET_NS = time.time_ns() - time.clock_gettime_ns(time.CLOCK_BOOTTIME)
 BPF_FIELDS = {
     "A": ("ts", "pid", "tid", "comm", "file", "a1", "a2", "a3", "a4"),
     "X": ("ts", "pid", "tid", "ppid", "uid", "nspid", "comm", "file"),
+    "V": ("ts", "pid", "comm", "argv"),
     "F": ("ts", "ppid", "tid"),
     "E": ("ts", "pid", "tid", "ppid", "uid", "nspid", "comm", "rt", "ut", "st", "maxrss", "start", "minflt", "majflt", "nvcsw", "nivcsw", "rqdelay", "slices", "rchar", "wchar", "syscr", "syscw", "rbytes", "wbytes"),
     "D": ("ts", "pid", "tid", "rt"),
@@ -658,7 +659,7 @@ BPF_FIELDS = {
     "BK": ("comm", "rwbs", "bytes"),
     "TICK": ("ts",),
 }
-BPF_STR = {"comm", "file", "a1", "a2", "a3", "a4", "saddr", "daddr", "tcomm", "dir", "name", "kind", "rwbs"}
+BPF_STR = {"comm", "file", "a1", "a2", "a3", "a4", "saddr", "daddr", "tcomm", "dir", "name", "kind", "rwbs", "argv"}
 TCP_ST = {1: "ESTABLISHED", 2: "SYN_SENT", 3: "SYN_RECV", 4: "FIN_WAIT1", 5: "FIN_WAIT2", 6: "TIME_WAIT", 7: "CLOSE", 8: "CLOSE_WAIT", 9: "LAST_ACK", 10: "LISTEN", 11: "CLOSING"}
 pending_agg = collections.defaultdict(list)
 bpf_state = {"cid": None, "ready": False, "started": None, "last_tick_t": 0}
@@ -682,6 +683,10 @@ def bpf_parse(line):
         rec["t"] = round((rec["ts"] + BOOT_OFFSET_NS) / 1e6, 3)
     if isinstance(rec.get("start"), int):
         rec["start"] = round((rec["start"] + BOOT_OFFSET_NS) / 1e6, 3)
+    if rec["e"] == "V":
+        # bpftrace %r escapes non-printables as \xNN; argv entries are NUL-separated
+        raw = re.sub(r"\\x([0-9a-fA-F]{2})", lambda m: chr(int(m.group(1), 16)), rec.get("argv", ""))
+        rec["argv"] = [a for a in raw.split("\x00") if a != ""]
     return rec
 
 

@@ -64,7 +64,7 @@ def load_procs(rd, agent_match=None):
         seen = {json.dumps(e, sort_keys=True) for e in ev if e["e"] in ("SY", "FR", "FW", "OP", "NT", "E", "D", "M")}
         ev += [e for e in late_events(rd, meta["t0"], meta["t1"], pids) if json.dumps(e, sort_keys=True) not in seen]
     threads, execs, argv = {}, collections.defaultdict(list), {}
-    first_exec, fork_parent = {}, {}
+    first_exec, fork_parent, full_argv = {}, {}, {}
     for e in ev:
         k = e["e"]
         if k == "A":
@@ -72,6 +72,8 @@ def load_procs(rd, agent_match=None):
             first_exec.setdefault(e["pid"], e.get("file"))
         elif k == "X":
             execs[e["pid"]].append(e)
+        elif k == "V" and e.get("argv"):
+            full_argv[e["pid"]] = e["argv"]
         elif k == "F":
             fork_parent.setdefault(e["tid"], e["ppid"])
         elif k in ("E", "D"):
@@ -107,7 +109,8 @@ def load_procs(rd, agent_match=None):
     for pid, p in procs.items():
         x = execs.get(pid)
         if x:
-            p["exe"] = x[-1].get("file")
+            # the exec tracepoint's filename (__data_loc) is unreliable; the execve syscall's filename is used
+            p["exe"] = argv[pid][0] if pid in argv else None
             if p.get("uid") is None:
                 p["uid"] = x[-1].get("uid")
             if not p.get("main_exit_seen"):
@@ -122,7 +125,9 @@ def load_procs(rd, agent_match=None):
             p["comm"] = next((th.get("comm") for (pp, tt), th in threads.items() if pp == pid and th.get("comm")), None)
         p["first_exec"] = first_exec.get(pid)
         p["last_exec"] = argv[pid][0] if pid in argv else None
-        if pid in argv:
+        if pid in full_argv:  # complete argv read after exec (newer runs)
+            p["argv"] = " ".join(full_argv[pid])[:400]
+        elif pid in argv:
             p["argv"] = (os.path.basename(argv[pid][0]) + " " + argv[pid][1]).strip()
         p["cmd"] = p.get("argv") or p.get("comm")
         p["life_ms"] = round((p.get("end") or 0) - p["start"], 2) if p.get("start") else None

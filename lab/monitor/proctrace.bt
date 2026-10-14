@@ -6,6 +6,7 @@
 // Immediate events
 //   A  ts pid tid comm filename argv1..argv4          execve() entry: what is being run
 //   X  ts pid tid ppid euid nspid comm filename       exec succeeded
+//   V  ts pid comm argv                               full argv after exec (NUL-separated, escaped), up to 192 bytes
 //   F  ts parent_pid child_tid                        fork/clone (threads included)
 //   E  ts pid tid ppid euid nspid comm runtime_ns utime_ns stime_ns maxrss_kb start_ns minflt majflt
 //      nvcsw nivcsw run_delay_ns timeslices rchar wchar syscr syscw read_bytes write_bytes
@@ -31,6 +32,9 @@ tracepoint:syscalls:sys_enter_execve /cgroup == cgroupid("CG")/ {
 tracepoint:sched:sched_process_exec /cgroup == cgroupid("CG")/ {
 	printf("X\t%llu\t%d\t%d\t%d\t%d\t%d\t%s\t%s\n", nsecs(boot), pid, tid, curtask->real_parent->tgid,
 		curtask->cred->euid.val, curtask->thread_pid->numbers[1].nr, comm, str(args.filename));
+	// full argv from the new process image (always paged in right after exec), NUL-separated
+	$n = curtask->mm->arg_end - curtask->mm->arg_start;
+	printf("V\t%llu\t%d\t%s\t%r\n", nsecs(boot), pid, comm, buf(uptr(curtask->mm->arg_start), $n > 192 ? 192 : $n));
 }
 
 tracepoint:sched:sched_process_fork /cgroup == cgroupid("CG")/ {

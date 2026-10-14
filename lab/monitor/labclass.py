@@ -18,6 +18,7 @@ Every process gets a named role; there is no catch-all bucket. Roles:
 import re
 
 SHELLS = {"bash", "sh", "dash", "zsh", "fish"}
+RUNTIMES = {"node", "bun", "deno", "python3", "python"}
 SEARCH = {"rg", "fd", "fdfind"}
 
 ROLE_INFO = {
@@ -51,7 +52,10 @@ class Classifier:
         if c and self.agent_re.search(c):
             # exclude shells that merely mention the agent in their command line
             return base(p.get("last_exec") or c.split(" ")[0]) not in SHELLS | {"tmux", "env", "timeout", "strace"}
-        return False
+        # argv can be missing (pages not faulted in at execve): a runtime process whose title
+        # (comm, set via process.title) matches the agent pattern is an agent too, e.g. pi subagents
+        comm = p.get("comm") or ""
+        return bool(comm and self.agent_re.search(comm) and base(p.get("last_exec") or "") in RUNTIMES)
 
     def classify(self, procs):
         roles = {}
