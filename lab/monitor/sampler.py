@@ -769,7 +769,9 @@ def bpf_manager():
             # even when this process is busy); a reader thread tails the file.
             env = dict(os.environ, BPFTRACE_MAX_MAP_KEYS="131072", BPFTRACE_PERF_RB_PAGES="2048", BPFTRACE_MAX_STRLEN="200")
             outpath = f"/tmp/bpf-{int(time.time())}.out"
-            proc = subprocess.Popen(["bpftrace", "--no-warnings", "-B", "line", "-o", outpath, "/tmp/proctrace.bt"], stdout=subprocess.DEVNULL, stderr=open("/tmp/bpftrace.stderr", "a"), env=env)
+            # stdout redirected to a file (not -o, which ignores -B line and block-buffers): every line is
+            # flushed immediately and writes never block on this reader
+            proc = subprocess.Popen(["bpftrace", "--no-warnings", "-B", "line", "/tmp/proctrace.bt"], stdout=open(outpath, "wb"), stderr=open("/tmp/bpftrace.stderr", "a"), env=env)
             cur_cid = cid
             bpf_state.update(cid=cid, ready=False, started=time.time())
             reader = threading.Thread(target=bpf_reader, args=(proc, outpath), daemon=True)
