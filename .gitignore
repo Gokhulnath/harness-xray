@@ -1,0 +1,16 @@
+# recovered third-party source (generated locally, never published)
+pi-src/
+lab/base/workspace-seed/bigrepo/
+# measurements and generated data (large; regenerate with lab/run.py + lab/analyze/*)
+lab/out/
+lab/explorer/data/
+# first-generation local files
+lab/pilab/
+lab/*.v1.py
+lab/**/*.v1.*
+# python / os
+__pycache__/
+*.pyc
+.DS_Store
+lab/analyze/analyze.py
+lab/analyze/facts.py
