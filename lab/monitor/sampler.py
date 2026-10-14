@@ -888,9 +888,17 @@ class Handler(BaseHTTPRequestHandler):
             return
         if u.path.startswith("/explorer/"):
             rel = u.path[len("/explorer/"):] or "index.html"
-            full = os.path.normpath(os.path.join(EXPLORER_DIR, rel))
-            if not full.startswith(os.path.normpath(EXPLORER_DIR)):
+            root = os.path.normpath(EXPLORER_DIR)
+            full = os.path.normpath(os.path.join(root, rel))
+            if full != root and not full.startswith(root + os.sep):
                 return self.send_error(403)
+            if os.path.isdir(full):  # sub-pages such as /explorer/learn/
+                if not u.path.endswith("/"):
+                    self.send_response(301)
+                    self.send_header("location", u.path + "/")
+                    self.end_headers()
+                    return
+                full = os.path.join(full, "index.html")
             return self._file(full)
         if u.path == "/stream":
             self.send_response(200)
