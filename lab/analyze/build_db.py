@@ -278,7 +278,7 @@ def load_run(con, harness, rd):
 
 def main():
     only = sys.argv[1:]
-    harnesses = sorted(d for d in os.listdir(OUT) if os.path.isdir(os.path.join(OUT, d, "runs")) and (not only or d in only))
+    harnesses = sorted(d for d in os.listdir(OUT) if not d.startswith("archive") and os.path.isdir(os.path.join(OUT, d, "runs")) and (not only or d in only))
     tmp = DB + ".tmp"
     if os.path.exists(tmp):
         os.remove(tmp)
