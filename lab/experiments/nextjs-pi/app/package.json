@@ -1,0 +1,12 @@
+{
+  "name": "nextjs-pi",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "next build", "start": "next start -p 3100" },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "0.87.1",
+    "next": "15.3.4",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  }
+}
