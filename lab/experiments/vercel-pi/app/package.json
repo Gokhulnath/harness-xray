@@ -1,0 +1,18 @@
+{
+  "name": "harness-xray-pi",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "1.2.0",
+    "e2b": "2.56.0",
+    "next": "15.5.27",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
+    "rivetkit": "2.3.27"
+  }
+}

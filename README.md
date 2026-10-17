@@ -28,6 +28,8 @@ lab-monitor (privileged): bpftrace (exec/fork/exit, exact CPU + peak RSS per pro
 | [`docs/RESEARCH.md`](docs/RESEARCH.md) | survey of existing tools (eBPF tracers, agent observability, mock LLMs, harness endpoints) |
 | [`reports/REPORT.md`](reports/REPORT.md) | how pi consumes CPU, memory, disk, network, processes and threads, step by step, with a reusable resource model (Opus analysts + adversarial verifiers) |
 | [`reports/HARNESS-COMPARISON.md`](reports/HARNESS-COMPARISON.md) | pi vs Claude Code, same scenarios side by side |
+| [`lab/experiments/nextjs-pi/`](lab/experiments/nextjs-pi/README.md) | local prototype: pi inside a Next.js API route, with its tools sent to a separate sandbox container over HTTP |
+| [`lab/experiments/vercel-pi/`](lab/experiments/vercel-pi/REPORT.md) | pi in a Next.js app on Vercel, three ways (all in the function; tools in E2B; pi in a Rivet Actor with tools in E2B), under normal load, heavy load and crash tests |
 
 ## Quick start
 

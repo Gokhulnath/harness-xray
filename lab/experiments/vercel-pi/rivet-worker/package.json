@@ -1,0 +1,15 @@
+{
+  "name": "harness-xray-pi-worker",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.19.0" },
+  "scripts": { "start": "node index.mjs" },
+  "dependencies": {
+    "@earendil-works/chord": "1.2.0",
+    "@earendil-works/pi-durable": "1.2.0",
+    "@rivet-dev/pi": "0.5.3",
+    "@rivet-dev/sandbox-adapter": "0.5.3",
+    "e2b": "2.56.0",
+    "rivetkit": "2.3.27"
+  }
+}
