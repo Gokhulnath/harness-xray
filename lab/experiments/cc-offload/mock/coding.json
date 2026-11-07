@@ -1,0 +1,212 @@
+[
+ {
+  "kind": "ls",
+  "path": "."
+ },
+ {
+  "kind": "find",
+  "pattern": "**/*.tsx",
+  "path": "."
+ },
+ {
+  "kind": "read",
+  "path": "package.json"
+ },
+ {
+  "kind": "read",
+  "path": "tsconfig.json"
+ },
+ {
+  "kind": "read",
+  "path": "app/page.tsx"
+ },
+ {
+  "kind": "read",
+  "path": "app/layout.tsx"
+ },
+ {
+  "kind": "read",
+  "path": "components/Counter.tsx"
+ },
+ {
+  "kind": "grep",
+  "pattern": "useState",
+  "path": "."
+ },
+ {
+  "kind": "grep",
+  "pattern": "Card3",
+  "path": "app"
+ },
+ {
+  "kind": "shell",
+  "command": "git init -q && git add -A && git commit -qm 'initial import' && git log --oneline | head -3"
+ },
+ {
+  "kind": "shell",
+  "command": "npm install --prefer-offline",
+  "timeout": 600
+ },
+ {
+  "kind": "shell",
+  "command": "npx tsc --noEmit --incremental false",
+  "timeout": 600
+ },
+ {
+  "kind": "shell",
+  "command": "npx eslint .",
+  "timeout": 600
+ },
+ {
+  "kind": "read",
+  "path": "lib/data.ts"
+ },
+ {
+  "kind": "edit",
+  "path": "lib/data.ts",
+  "oldText": "count = 25",
+  "newText": "count = 30"
+ },
+ {
+  "kind": "write",
+  "path": "components/Stats.tsx",
+  "content": "type Props = { values: number[] };\n\nexport default function Stats({ values }: Props) {\n  const n = values.length;\n  const mean = n ? values.reduce((a, b) => a + b, 0) / n : 0;\n  const max = n ? Math.max(...values) : 0;\n  return (\n    <aside className=\"rounded-lg bg-gray-50 p-3 text-sm\">\n      <p>Mean {mean.toFixed(2)}</p>\n      <p>Max {max.toFixed(2)}</p>\n      <p>Count {n}</p>\n    </aside>\n  );\n}\n"
+ },
+ {
+  "kind": "read",
+  "path": "app/gen/p05/page.tsx"
+ },
+ {
+  "kind": "edit",
+  "path": "app/gen/p05/page.tsx",
+  "oldText": "import Counter from \"@/components/Counter\";",
+  "newText": "import Counter from \"@/components/Counter\";\nimport Stats from \"@/components/Stats\";"
+ },
+ {
+  "kind": "edit",
+  "path": "app/gen/p05/page.tsx",
+  "oldText": "<Counter start={5} step={1} />",
+  "newText": "<Counter start={5} step={1} />\n      <Stats values={data.map((d) => d.value)} />"
+ },
+ {
+  "kind": "shell",
+  "command": "npx tsc --noEmit --incremental false",
+  "timeout": 600
+ },
+ {
+  "kind": "write",
+  "path": "lib/mean.mjs",
+  "content": "export function mean(xs) {\n  return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0;\n}\n\nexport function median(xs) {\n  if (!xs.length) return 0;\n  const s = [...xs].sort((a, b) => a - b);\n  const m = Math.floor(s.length / 2);\n  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;\n}\n"
+ },
+ {
+  "kind": "write",
+  "path": "test/mean.test.mjs",
+  "content": "import assert from \"node:assert/strict\";\nimport { test } from \"node:test\";\nimport { mean, median } from \"../lib/mean.mjs\";\n\ntest(\"mean of nothing is 0\", () => assert.equal(mean([]), 0));\ntest(\"mean\", () => assert.equal(mean([1, 2, 3, 4]), 2.5));\ntest(\"median odd\", () => assert.equal(median([5, 1, 3]), 3));\ntest(\"median even\", () => assert.equal(median([4, 1, 3, 2]), 2.5));\n"
+ },
+ {
+  "kind": "shell",
+  "command": "node --test test/mean.test.mjs",
+  "timeout": 300
+ },
+ {
+  "kind": "grep",
+  "pattern": "export function useMemo",
+  "path": "node_modules/react"
+ },
+ {
+  "kind": "grep",
+  "pattern": "experimental",
+  "path": "node_modules/next/dist/server/config-shared.js"
+ },
+ {
+  "kind": "read",
+  "path": "node_modules/next/package.json"
+ },
+ {
+  "kind": "find",
+  "pattern": "**/*.d.ts",
+  "path": "node_modules/next/dist/client"
+ },
+ {
+  "kind": "shell",
+  "command": "npx next build",
+  "timeout": 900
+ },
+ {
+  "kind": "shell",
+  "command": "git status --short | head -20"
+ },
+ {
+  "kind": "shell",
+  "command": "git diff --stat"
+ },
+ {
+  "kind": "read",
+  "path": "app/gen/p05/page.tsx"
+ },
+ {
+  "kind": "grep",
+  "pattern": "Stats",
+  "path": "app"
+ },
+ {
+  "kind": "edit",
+  "path": "components/Stats.tsx",
+  "oldText": "<p>Count {n}</p>",
+  "newText": "<p>Count {n} values</p>"
+ },
+ {
+  "kind": "shell",
+  "command": "npx eslint components lib",
+  "timeout": 600
+ },
+ {
+  "kind": "shell",
+  "command": "git add -A && git commit -qm 'Add stats widget' && git log --oneline | head -3"
+ },
+ {
+  "kind": "read",
+  "path": "README.md"
+ },
+ {
+  "kind": "grep",
+  "pattern": "TODO",
+  "path": "."
+ },
+ {
+  "kind": "ls",
+  "path": "components"
+ },
+ {
+  "kind": "read",
+  "path": "components/Card3.tsx"
+ },
+ {
+  "kind": "edit",
+  "path": "components/Card3.tsx",
+  "oldText": "className=\"rounded-xl border p-4 shadow-sm\"",
+  "newText": "className=\"rounded-xl border p-4 shadow-md\""
+ },
+ {
+  "kind": "shell",
+  "command": "npx tsc --noEmit --incremental false",
+  "timeout": 600
+ },
+ {
+  "kind": "shell",
+  "command": "npx next build",
+  "timeout": 900
+ },
+ {
+  "kind": "shell",
+  "command": "du -sh .next node_modules"
+ },
+ {
+  "kind": "shell",
+  "command": "git add -A && git commit -qm 'Tweak card' && git log --oneline | head -5"
+ },
+ {
+  "kind": "read",
+  "path": "lib/data.ts"
+ }
+]

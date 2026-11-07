@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "/opt/cco/hook.sh pre-bash" }] },
+      { "matcher": "Read|Edit|Write", "hooks": [{ "type": "command", "command": "/opt/cco/hook.sh pre-read" }] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Write|Edit", "hooks": [{ "type": "command", "command": "/opt/cco/hook.sh post-upload" }] }
+    ]
+  }
+}

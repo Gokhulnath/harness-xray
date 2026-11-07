@@ -1,0 +1,4 @@
+# tsz-sandbox plus a Rust toolchain, for the native-compile workload (ripgrep 14.1.1, vendored crates).
+FROM tsz-sandbox
+ENV RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo PATH=/opt/cargo/bin:$PATH
+RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable --no-modify-path && rustc --version
